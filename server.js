@@ -6,13 +6,14 @@ const url = 'mongodb://mongodev:Covid2020!@95.110.131.172:27017/gymme_dev'
 var multer = require('multer');
 var upload = multer();
 
-// for parsing application/json
-app.use(express.json());
-
 // for parsing application/x-www-form-urlencoded
 app.use(express.urlencoded({ extended: true }));
 
 app.use(upload.array());
+
+// for parsing application/json
+app.use(express.json({limit: '50mb'}));
+app.use(express.urlencoded({limit: '50mb'}));
 
 var db
 
@@ -43,7 +44,6 @@ app.get('/trainingCards', function (req, res) {
 
 
 app.post('/uploadCard', function (req, res) {
-  console.log(req.body)
   let userId = req.body.userId;
   let file = req.body.file;
   db.collection('users').updateOne({ uid: userId }, { $push: { cards: file } })
