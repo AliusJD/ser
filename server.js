@@ -41,6 +41,67 @@ app.get('/trainingCards', function (req, res) {
 
 });
 
+// Parte Calendario
+app.get('/eventCalendar', function (req, res) {
+  let test = req.query.uid;
+  console.log(test)
+  const query = { uid: test };
+  db.collection('eventi').findOne(query)
+    .then(results => {
+      console.log(results)
+      res.send(results);
+    })
+    .catch(error => console.error(error))
+
+});
+
+
+app.post('/uploadEvent', function (req, res) {
+  console.log(req.body)
+  let userId = req.body.userId;
+  let evento = req.body.evento;
+  let giorno = req.body.giorno;
+  let strQuery = "impegni."+giorno;
+  var upVal = {};
+  upVal[strQuery] = evento;
+  db.collection('eventi').updateOne({ uid: userId }, { "$push": upVal })
+    .then(results => {
+      res.send(results);
+    })
+    .catch(error => console.error(error))
+});
+
+app.post('/deleteEvent', function (req, res) {
+  console.log(req.body)
+  let userId = req.body.userId;
+  let evento = req.body.evento;
+  let giorno = req.body.giorno; 
+  let idEvento = req.body.id;
+  let strQuery = "impegni."+giorno;
+  var upVal = {};
+  var upVar2 = {id: idEvento};
+  upVal[strQuery] = upVar2;
+  console.log(upVal);
+  db.collection('eventi').updateOne({ uid: userId }, { "$pull": upVal })
+    .then(results => {
+      res.send(results);
+    })
+    .catch(error => console.error(error))
+});
+
+app.get('/getTrainee', function (req, res) {
+  let trainer = req.query.uid;
+  console.log(trainer)
+  const query = { "contacts.0" : trainer };
+  db.collection('users').find(query,{ projection: { contacts : 0}}).toArray()
+    .then(results => {
+      console.log(results)
+      res.send(results);
+    })
+    .catch(error => console.error(error))
+
+});
+// Fine parte Calendario
 
 app.post('/uploadCard', function (req, res) {
   console.log(req.body)
