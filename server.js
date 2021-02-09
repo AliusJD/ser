@@ -114,6 +114,27 @@ app.post('/uploadCard', function (req, res) {
     .catch(error => console.error(error))
 });
 
+//Chat
+app.get('/chats', function (req, res) {
+  let channelId = req.query._id;
+  const query = { _id: channelId };
+  db.collection('channels').findOne(query)
+      .then(results => {
+        res.send(results);
+      })
+      .catch(error => console.error(error))
+});
+
+app.post('/sendMessage', function (req, res) {
+    let channelId = req.body._id;
+    let message = req.body.message;
+    db.collection('channels').updateOne({ _id: channelId }, { $push: { messages : message }})
+        .then(results => {
+            res.send(results);
+        })
+        .catch(error => console.error(error))
+});
+
 // Change the 404 message modifing the middleware
 app.use(function (req, res, next) {
   res.status(404).send("Sorry, that route doesn't exist. Have a nice day :)");
