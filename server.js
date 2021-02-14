@@ -135,6 +135,17 @@ app.post('/sendMessage', function (req, res) {
         .catch(error => console.error(error))
 });
 
+//Users
+app.get('/user', function (req, res) {
+    let uid = req.query.uid;
+    const query = { uid: uid };
+    db.collection('users').findOne(query)
+        .then(results => {
+            res.send(results);
+        })
+        .catch(error => console.error(error))
+});
+
 // Change the 404 message modifing the middleware
 app.use(function (req, res, next) {
   res.status(404).send("Sorry, that route doesn't exist. Have a nice day :)");
