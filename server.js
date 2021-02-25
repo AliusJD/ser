@@ -12,8 +12,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(upload.array());
 
 // for parsing application/json
-app.use(express.json({limit: '50mb'}));
-app.use(express.urlencoded({limit: '50mb'}));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb' }));
 
 var db
 
@@ -29,20 +29,68 @@ app.get('/', function (req, res) {
   res.send('My first express http server');
 });
 
-
+// Trainig Card
 app.get('/trainingCards', function (req, res) {
   let userId = req.query.userId;
-  const query = { uid: userId };
-  db.collection('users').findOne(query, { projection: { _id: 0, cards: 1 } })
+  const query = { trainerId: userId };
+  db.collection('training_cards').findOne(query, { projection: { _id: 0, cards: 1 } })
     .then(results => {
-      console.log(results)
       res.send(results);
     })
     .catch(error => console.error(error))
 
 });
 
-// Parte Calendario
+app.post('/uploadCard', function (req, res) {
+  let userId = req.body.userId;
+  let file = req.body.file;
+  console.log(file.date)
+  db.collection('training_cards').updateOne({ trainerId: userId }, { $push: { cards: file } })
+    .then(results => {
+      res.send(results);
+    })
+    .catch(error => console.error(error))
+});
+
+app.post('/deleteCard', function (req, res) {
+  let trainerId = req.body.trainerId;
+  let filename = req.body.filename;
+  console.log(trainerId)
+  db.collection('training_cards').updateOne({ trainerId: trainerId }, { $pull: { cards: { name: filename } } })
+    .then(results => {
+      res.send(results);
+    })
+    .catch(error => console.error(error))
+});
+
+app.post('/cardTrainees', function (req, res) {
+  let trainerId = req.body.trainerId;
+  let trainees = req.body.trainees;
+  let filename = req.body.filename;
+  console.log(JSON.stringify(trainees))
+  db.collection('training_cards').updateOne({ trainerId: trainerId, "cards.name": filename }, { $set: { "cards.$.trainees": trainees } })
+    .then(results => {
+      res.send(results);
+    })
+    .catch(error => console.error(error))
+});
+
+app.get('/getTrainees', function (req, res) {
+  let userId = req.query.userId;
+  const query = { uid: userId };
+  const filter = {
+    _id: 0,
+    contacts: 1
+  }
+  db.collection('users').findOne(query, { projection: filter })
+    .then(results => {
+      res.send(results);
+    })
+    .catch(error => console.error(error))
+});
+
+
+// Calendar
 app.get('/eventCalendar', function (req, res) {
   let test = req.query.uid;
   console.log(test)
@@ -62,7 +110,7 @@ app.post('/uploadEvent', function (req, res) {
   let userId = req.body.userId;
   let evento = req.body.evento;
   let giorno = req.body.giorno;
-  let strQuery = "impegni."+giorno;
+  let strQuery = "impegni." + giorno;
   var upVal = {};
   upVal[strQuery] = evento;
   db.collection('eventi').updateOne({ uid: userId }, { "$push": upVal })
@@ -76,11 +124,11 @@ app.post('/deleteEvent', function (req, res) {
   console.log(req.body)
   let userId = req.body.userId;
   let evento = req.body.evento;
-  let giorno = req.body.giorno; 
+  let giorno = req.body.giorno;
   let idEvento = req.body.id;
-  let strQuery = "impegni."+giorno;
+  let strQuery = "impegni." + giorno;
   var upVal = {};
-  var upVar2 = {id: idEvento};
+  var upVar2 = { id: idEvento };
   upVal[strQuery] = upVar2;
   console.log(upVal);
   db.collection('eventi').updateOne({ uid: userId }, { "$pull": upVal })
@@ -93,8 +141,8 @@ app.post('/deleteEvent', function (req, res) {
 app.get('/getTrainee', function (req, res) {
   let trainer = req.query.uid;
   console.log(trainer)
-  const query = { "contacts.0" : trainer };
-  db.collection('users').find(query,{ projection: { contacts : 0}}).toArray()
+  const query = { "contacts.0": trainer };
+  db.collection('users').find(query, { projection: { contacts: 0 } }).toArray()
     .then(results => {
       console.log(results)
       res.send(results);
@@ -102,48 +150,37 @@ app.get('/getTrainee', function (req, res) {
     .catch(error => console.error(error))
 
 });
-// Fine parte Calendario
-
-app.post('/uploadCard', function (req, res) {
-  let userId = req.body.userId;
-  let file = req.body.file;
-  db.collection('users').updateOne({ uid: userId }, { $push: { cards: file } })
-    .then(results => {
-      res.send(results);
-    })
-    .catch(error => console.error(error))
-});
 
 //Chat
 app.get('/chats', function (req, res) {
   let channelId = req.query._id;
   const query = { _id: channelId };
   db.collection('channels').findOne(query)
-      .then(results => {
-        res.send(results);
-      })
-      .catch(error => console.error(error))
+    .then(results => {
+      res.send(results);
+    })
+    .catch(error => console.error(error))
 });
 
 app.post('/sendMessage', function (req, res) {
-    let channelId = req.body._id;
-    let message = req.body.message;
-    db.collection('channels').updateOne({ _id: channelId }, { $push: { messages : message }})
-        .then(results => {
-            res.send(results);
-        })
-        .catch(error => console.error(error))
+  let channelId = req.body._id;
+  let message = req.body.message;
+  db.collection('channels').updateOne({ _id: channelId }, { $push: { messages: message } })
+    .then(results => {
+      res.send(results);
+    })
+    .catch(error => console.error(error))
 });
 
 //Users
 app.get('/user', function (req, res) {
-    let uid = req.query.uid;
-    const query = { uid: uid };
-    db.collection('users').findOne(query)
-        .then(results => {
-            res.send(results);
-        })
-        .catch(error => console.error(error))
+  let uid = req.query.uid;
+  const query = { uid: uid };
+  db.collection('users').findOne(query)
+    .then(results => {
+      res.send(results);
+    })
+    .catch(error => console.error(error))
 });
 
 // Change the 404 message modifing the middleware
