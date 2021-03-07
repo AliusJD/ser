@@ -106,18 +106,22 @@ app.get('/eventCalendar', function (req, res) {
 
 
 app.post('/uploadEvent', function (req, res) {
-  console.log(req.body)
+  //console.log(req.body)
   let userId = req.body.userId;
-  let evento = req.body.evento;
-  let giorno = req.body.giorno;
-  let strQuery = "impegni." + giorno;
+  let eventi = req.body.eventi;
+  let strQuery = "";
   var upVal = {};
-  upVal[strQuery] = evento;
+  Object.keys(eventi).forEach((key) => {
+    strQuery = "impegni." + key;
+    upVal[strQuery] = eventi[key];
+  });
+
   db.collection('eventi').updateOne({ uid: userId }, { "$push": upVal })
     .then(results => {
       res.send(results);
     })
     .catch(error => console.error(error))
+
 });
 
 app.post('/deleteEvent', function (req, res) {
