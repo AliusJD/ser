@@ -127,13 +127,27 @@ app.post('/uploadEvent', function (req, res) {
 app.post('/deleteEvent', function (req, res) {
   console.log(req.body)
   let userId = req.body.userId;
-  let evento = req.body.evento;
   let giorno = req.body.giorno;
-  let idEvento = req.body.id;
-  let strQuery = "impegni." + giorno;
-  var upVal = {};
-  var upVar2 = { id: idEvento };
-  upVal[strQuery] = upVar2;
+  let eventi = req.body.eventi;
+  let idEvento = req.body.evento.id;
+  let idRip = req.body.evento.idRip;
+  let tipo = req.body.tipo;
+  
+  let upVal = {};
+  let strQuery = "";
+  let upVar2 = {};
+  if(tipo == "none"){
+    strQuery = "impegni." + giorno;
+    upVar2 = { id: idEvento };
+    upVal[strQuery] = upVar2;
+  } else {
+    Object.keys(eventi).forEach((key) => {
+      strQuery = "impegni." + key;
+      upVar2 = { idRip: idRip }
+      upVal[strQuery] = upVar2;
+    });
+  }
+  
   console.log(upVal);
   db.collection('eventi').updateOne({ uid: userId }, { "$pull": upVal })
     .then(results => {
