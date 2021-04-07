@@ -201,6 +201,30 @@ app.get('/user', function (req, res) {
     .catch(error => console.error(error))
 });
 
+app.post('/updateDescription', function (req, res) {
+  let uid = req.body.uid;
+  let description = req.body.description;
+  console.log("uid: " + uid);
+  console.log("descrizione: " + description);
+  db.collection('users').updateOne({ uid: uid }, { $set: { description: description } })
+    .then(results => {
+      res.send(results);
+    })
+    .catch(error => console.error(error))
+});
+
+app.post('/updateFormazione', function (req, res) {
+  let uid = req.body.uid;
+  let formazione = req.body.formazione;
+  console.log("uid: " + uid);
+  console.log("formazione: " + formazione);
+  db.collection('users').updateOne({ uid: uid }, { $set: { formazione: formazione } })
+    .then(results => {
+      res.send(results);
+    })
+    .catch(error => console.error(error))
+});
+
 // Change the 404 message modifing the middleware
 app.use(function (req, res, next) {
   res.status(404).send("Sorry, that route doesn't exist. Have a nice day :)");
