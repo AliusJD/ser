@@ -225,6 +225,42 @@ app.post('/updateFormazione', function (req, res) {
     .catch(error => console.error(error))
 });
 
+app.post('/updatePicture', function (req, res) {
+  let uid = req.body.uid;
+  let profile_pic = req.body.profile_pic;
+  console.log("uid: " + uid);
+  db.collection('users').updateOne({ uid: uid }, { $set: { profile_pic: profile_pic } })
+    .then(results => {
+      res.send(results);
+    })
+    .catch(error => console.error(error))
+});
+
+app.get('/faq', function (req, res) {
+  let uid = req.query.uid;
+  const query = { uid: uid };
+  db.collection('faq').findOne(query, { projection: { _id: 0, questions: 1 } })
+    .then(results => {
+      res.send(results);
+    })
+    .catch(error => console.error(error))
+
+});
+
+app.post('/refreshFaq', function (req, res) {
+  let uid = req.body.uid;
+  let questions = req.body.questions;
+  console.log("uid: " + uid);
+  console.log("questions: " + questions);
+  db.collection('faq').updateOne({ uid: uid }, { $set: { questions: questions } })
+    .then(results => {
+      res.send(results);
+    })
+    .catch(error => console.error(error))
+});
+
+
+
 // Change the 404 message modifing the middleware
 app.use(function (req, res, next) {
   res.status(404).send("Sorry, that route doesn't exist. Have a nice day :)");
