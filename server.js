@@ -180,6 +180,26 @@ app.get('/chats', function (req, res) {
     .catch(error => console.error(error))
 });
 
+app.get('/chatMessages', function (req, res) {
+  let channelId = req.query._id;
+  const query = { _id: channelId };
+  db.collection('channels').findOne(query)
+      .then(results => {
+        res.send(results.messages);
+      })
+      .catch(error => console.error(error))
+});
+
+app.get('/chatImages', function (req, res) {
+  let channelId = req.query._id;
+  const query = { _id: channelId };
+  db.collection('channels').findOne(query)
+      .then(results => {
+        res.send(results.messages.filter((m) => m.image !== ""));
+      })
+      .catch(error => console.error(error))
+});
+
 app.post('/sendMessage', function (req, res) {
   let channelId = req.body._id;
   let message = req.body.message;
