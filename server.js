@@ -236,6 +236,19 @@ app.post('/updatePicture', function (req, res) {
     .catch(error => console.error(error))
 });
 
+app.post('/updatePersInfo', function (req, res) {
+  let uid = req.body.uid;
+  let eta = req.body.eta;
+  let peso = req.body.peso;
+  let altezza = req.body.altezza;
+  console.log("uid: " + uid);
+  db.collection('users').updateOne({ uid: uid }, { $set: { eta: eta , peso: peso, altezza: altezza} })
+    .then(results => {
+      res.send(results);
+    })
+    .catch(error => console.error(error))
+});
+
 app.get('/faq', function (req, res) {
   let uid = req.query.uid;
   const query = { uid: uid };
