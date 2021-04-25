@@ -156,6 +156,38 @@ app.post('/deleteEvent', function (req, res) {
     .catch(error => console.error(error))
 });
 
+
+/*  
+*   getEvents recupera tutti gli eventi in cui è l'utente trainee è presente nel campo trainee
+*   PARAMS: trainerID e userID
+*   RETURN: dizionario di tutti gli eventi = "day": [array di eventi]
+*/
+app.get('/getEvents', function (req, res) {
+  let trainerId = req.query.trainerId;
+  let userId = req.query.userId;
+
+function isTraineeInside(val){
+  
+  var isInside = val.trainee.filter(trainee => trainee.value == userId)
+  return isInside.length > 0
+}
+  var filtered = {}
+  db.collection('eventi').find({'uid':trainerId},{'impegni':1}).toArray()
+    .then(results => {
+      for (const [key, value] of Object.entries(results[0].impegni)) {
+        if(value.length > 0){
+          var env = value.filter(isTraineeInside)
+          if(env.length != 0){
+            filtered[key] = env
+          }
+        }
+      }
+      res.send(filtered);
+    })
+    .catch(error => console.error(error))
+});
+
+
 app.get('/getTrainee', function (req, res) {
   let trainer = req.query.uid;
   console.log(trainer)
@@ -178,6 +210,26 @@ app.get('/chats', function (req, res) {
       res.send(results);
     })
     .catch(error => console.error(error))
+});
+
+app.get('/chatMessages', function (req, res) {
+  let channelId = req.query._id;
+  const query = { _id: channelId };
+  db.collection('channels').findOne(query)
+      .then(results => {
+        res.send(results.messages);
+      })
+      .catch(error => console.error(error))
+});
+
+app.get('/chatImages', function (req, res) {
+  let channelId = req.query._id;
+  const query = { _id: channelId };
+  db.collection('channels').findOne(query)
+      .then(results => {
+        res.send(results.messages.filter((m) => m.image !== ""));
+      })
+      .catch(error => console.error(error))
 });
 
 app.post('/sendMessage', function (req, res) {
