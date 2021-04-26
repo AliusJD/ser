@@ -132,11 +132,11 @@ app.post('/deleteEvent', function (req, res) {
   let idEvento = req.body.evento.id;
   let idRip = req.body.evento.idRip;
   let tipo = req.body.tipo;
-  
+
   let upVal = {};
   let strQuery = "";
   let upVar2 = {};
-  if(tipo == "none"){
+  if (tipo == "none") {
     strQuery = "impegni." + giorno;
     upVar2 = { id: idEvento };
     upVal[strQuery] = upVar2;
@@ -147,7 +147,7 @@ app.post('/deleteEvent', function (req, res) {
       upVal[strQuery] = upVar2;
     });
   }
-  
+
   console.log(upVal);
   db.collection('eventi').updateOne({ uid: userId }, { "$pull": upVal })
     .then(results => {
@@ -165,24 +165,52 @@ app.post('/deleteEvent', function (req, res) {
 app.get('/getEvents', function (req, res) {
   let trainerId = req.query.trainerId;
   let userId = req.query.userId;
-
-function isTraineeInside(val){
-  
-  var isInside = val.trainee.filter(trainee => trainee.value == userId)
-  return isInside.length > 0
-}
-  var filtered = {}
-  db.collection('eventi').find({'uid':trainerId},{'impegni':1}).toArray()
+  db.collection('eventi').find({ 'uid': trainerId }, { 'impegni': 1 }).toArray()
     .then(results => {
-      for (const [key, value] of Object.entries(results[0].impegni)) {
-        if(value.length > 0){
-          var env = value.filter(isTraineeInside)
-          if(env.length != 0){
-            filtered[key] = env
-          }
-        }
+      let filteredEvents = createEventDictionary(results[0].impegni, userId);
+      res.send(filteredEvents);
+    })
+    .catch(error => console.error(error))
+});
+
+function createEventDictionary(fullList, userId) {
+  var dict = {}
+  function isTraineeInside(val) {
+    let isInside = val.trainee.filter(trainee => trainee.value == userId);
+    return isInside.length > 0;
+  }
+  for (const [key, value] of Object.entries(fullList)) {
+    if (value.length > 0) {
+      let env = value.filter(isTraineeInside);
+      if (env.length != 0) {
+        dict[key] = env;
       }
-      res.send(filtered);
+    }
+  }
+  return dict;
+}
+
+/*  
+*   getUpcomingEvents recupera tutti gli eventi prossimi per il trainee (2 giorni)
+*   PARAMS: trainerID e userID
+*   RETURN: dizionario di tutti gli eventi = "day": [array di eventi]
+*/
+app.get('/getUpcomingEvents', function (req, res) {
+  let trainerId = req.query.trainerId;
+  let userId = req.query.userId;
+  db.collection('eventi').find({ 'uid': trainerId }, { 'impegni': 1 }).toArray()
+    .then(results => {
+      let filteredEvents = createEventDictionary(results[0].impegni, userId);
+      let upcomingEvents = {};
+      console.log(filteredEvents);
+      if (Object.keys(filteredEvents).length > 2) {
+        let [first, second] = Object.keys(filteredEvents);
+        upcomingEvents[first] = filteredEvents[first];
+        upcomingEvents[second] = filteredEvents[second];
+      } else {
+        upcomingEvents = filteredEvents;
+      }
+      res.send(upcomingEvents);
     })
     .catch(error => console.error(error))
 });
@@ -216,20 +244,20 @@ app.get('/chatMessages', function (req, res) {
   let channelId = req.query._id;
   const query = { _id: channelId };
   db.collection('channels').findOne(query)
-      .then(results => {
-        res.send(results.messages);
-      })
-      .catch(error => console.error(error))
+    .then(results => {
+      res.send(results.messages);
+    })
+    .catch(error => console.error(error))
 });
 
 app.get('/chatImages', function (req, res) {
   let channelId = req.query._id;
   const query = { _id: channelId };
   db.collection('channels').findOne(query)
-      .then(results => {
-        res.send(results.messages.filter((m) => m.image !== ""));
-      })
-      .catch(error => console.error(error))
+    .then(results => {
+      res.send(results.messages.filter((m) => m.image !== ""));
+    })
+    .catch(error => console.error(error))
 });
 
 app.post('/sendMessage', function (req, res) {
