@@ -29,6 +29,59 @@ app.get('/', function (req, res) {
   res.send('My first express http server');
 });
 
+app.post('/registerTrainer', function (req, res) {
+  let user = req.body.user;
+  let channel = req.body.channel;
+  let event = req.body.event;
+  let faq = req.body.faq;
+  let trainingcard = req.body.trainingcard;
+  let application = req.body.application;
+  db.collection('users').insertOne(user)
+    .then(results => {
+      db.collection('channels').insertOne(channel)
+        .then(results => {
+          db.collection('eventi').insertOne(event)
+            .then(results => {
+              db.collection('faq').insertOne(faq)
+                .then(results => {
+                  db.collection('training_cards').insertOne(trainingcard)
+                    .then(results => {
+                      db.collection('application').insertOne(application)
+                        .then(results => {
+                          res.send(results);
+                        })
+                        .catch(error => console.error(error))
+                    })
+                    .catch(error => console.error(error))
+                })
+                .catch(error => console.error(error))
+            })
+            .catch(error => console.error(error))
+        })
+        .catch(error => console.error(error))
+    })
+    .catch(error => console.error(error))
+});
+
+app.post('/registerTrainee', function (req, res) {
+  let user = req.body.user;
+  let channel = req.body.channel;
+  let application = req.body.application;
+  db.collection('users').insertOne(user)
+    .then(results => {
+      db.collection('channels').insertOne(channel)
+        .then(results => {
+          db.collection('application').insertOne(application)
+            .then(results => {
+              res.send(results);
+            })
+            .catch(error => console.error(error))
+        })
+        .catch(error => console.error(error))
+    })
+    .catch(error => console.error(error))
+});
+
 // Trainig Card
 app.get('/trainingCards', function (req, res) {
   let userId = req.query.userId;
@@ -322,7 +375,7 @@ app.post('/updatePersInfo', function (req, res) {
   let peso = req.body.peso;
   let altezza = req.body.altezza;
   console.log("uid: " + uid);
-  db.collection('users').updateOne({ uid: uid }, { $set: { eta: eta , peso: peso, altezza: altezza} })
+  db.collection('users').updateOne({ uid: uid }, { $set: { eta: eta, peso: peso, altezza: altezza } })
     .then(results => {
       res.send(results);
     })
