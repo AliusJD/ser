@@ -86,13 +86,61 @@ app.post('/registerTrainee', function (req, res) {
 app.get('/trainingCards', function (req, res) {
   let userId = req.query.userId;
   const query = { trainerId: userId };
-  db.collection('training_cards').findOne(query, { projection: { _id: 0, cards: 1 } })
+  db.collection('training_cards').findOne(query, { projection: { _id: 0, "cards.name": 1, "cards.trainees": 1, "cards.date": 1 } })
     .then(results => {
       res.send(results);
     })
     .catch(error => console.error(error))
 
 });
+
+
+// Get training card for trainees
+app.get('/traineeCards', function (req, res) {
+  let trainerId = req.query.trainerId;
+  let userId = req.query.userId;
+  const query = { trainerId: trainerId };
+  db.collection('training_cards').findOne(query, { projection: { _id: 0, "cards.name": 1, "cards.trainees": 1, "cards.date": 1 } })
+    .then(results => {
+      var cards = [];
+      if (results.cards.length > 0) {
+        results.cards.map(card => {
+          if (card.trainees.length > 0) {
+            card.trainees.map(trainee => {
+              console.log(trainee.value)
+              if (trainee.value == userId) {
+                cards.push(card);
+              }
+            })
+          }
+        })
+      }
+      res.send(cards);
+    }).catch(error => console.error(error))
+});
+
+
+app.get('/getCard', function (req, res) {
+  let trainerId = req.query.trainerId;
+  let date = req.query.date;
+  const query = { trainerId: trainerId };
+  console.log(trainerId)
+  db.collection('training_cards').findOne(query, { projection: { _id: 0, "cards.name": 1, "cards.content": 1, "cards.date": 1 } })
+    .then(results => {
+      var cardContent;
+      if (results.cards.length > 0) {
+        results.cards.map(card => {
+          if (card.date == date) {
+            cardContent = card
+          }
+        })
+      }
+      console.log(cardContent)
+      res.send(cardContent);
+    }).catch(error => console.error(error))
+});
+
+
 
 app.post('/uploadCard', function (req, res) {
   let userId = req.body.userId;
