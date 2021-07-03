@@ -316,6 +316,38 @@ app.get('/getUpcomingEvents', function (req, res) {
     .catch(error => console.error(error))
 });
 
+app.get('/getUpcomingTrainerEvents', function (req, res) {
+    let userId = req.query.userId;
+    db.collection('eventi').find({'uid': userId}, {'impegni': 1}).toArray()
+        .then(results => {
+
+            let filteredEvents = {};
+            for (const [key, value] of Object.entries(results[0].impegni)) {
+                if (value.length > 0) {
+                    filteredEvents[key] = value;
+                }
+            }
+
+            let upcomingEvents = {};
+            if (Object.keys(filteredEvents).length > 2) {
+                let [first, second] = Object.keys(filteredEvents);
+                upcomingEvents[first] = filteredEvents[first];
+                upcomingEvents[second] = filteredEvents[second];
+            } else {
+                upcomingEvents = filteredEvents;
+            }
+
+            let result = []
+            for (let key in upcomingEvents) {
+                upcomingEvents[key].forEach(element => {
+                    result.push(element);
+                });
+            }
+
+            res.send(result);
+        })
+        .catch(error => console.error(error))
+});
 
 app.get('/getTrainee', function (req, res) {
   let trainer = req.query.uid;
