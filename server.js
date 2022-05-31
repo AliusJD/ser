@@ -1,8 +1,8 @@
 const express = require('express')
 const app = express()
 var MongoClient = require('mongodb').MongoClient
-const dbName = 'gymme_dev'
-const url = 'mongodb://mongodev:Covid2020!@95.110.131.172:27017/gymme_dev'
+const dbName = 'gymme'
+const url = 'mongodb+srv://gymme:Gymme2022@gymme.pypbz.mongodb.net/?retryWrites=true&w=majority";'
 var multer = require('multer');
 var upload = multer();
 
@@ -377,10 +377,36 @@ app.get('/user', function (req, res) {
   const query = { uid: uid };
   db.collection('users').findOne(query)
     .then(results => {
-      res.send(results);
+      if (results.contacts) {
+        results.contacts.map(user => {
+          db.collection('users').findOne({ uid: user.uid }, { projection: { profile_pic: 1 } })
+            .then(result => {
+              if (result) {
+                user["profile_pic"] = result.profile_pic ? result.profile_pic : null;
+
+              }
+            })
+        });
+        res.send(results);
+      }
+
     })
     .catch(error => console.error(error))
 });
+
+
+const getContactsPic = (contacts) => {
+  contacts.map(user => {
+    db.collection('users').findOne({ uid: user.uid }, { projection: { profile_pic: 1 } })
+      .then(result => {
+        if (result) {
+          user["picture"] = result.profile_pic ? result.profile_pic : null;
+
+        }
+      })
+  });
+}
+
 
 app.post('/updateDescription', function (req, res) {
   let uid = req.body.uid;
