@@ -2,7 +2,8 @@ const express = require('express')
 const app = express()
 var MongoClient = require('mongodb').MongoClient
 const dbName = 'gymme'
-const url = 'mongodb+srv://gymme:Gymme2022@gymme.pypbz.mongodb.net/?retryWrites=true&w=majority";'
+//const url = 'mongodb+srv://gymme:Gymme2022@gymme.pypbz.mongodb.net/?retryWrites=true&w=majority";'
+const url = 'mongodb+srv://gymme:Gymme2022@gymme.pypbz.mongodb.net/test?authSource=admin&replicaSet=atlas-q7k3kv-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true'
 var multer = require('multer');
 var upload = multer();
 
