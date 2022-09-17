@@ -1,213 +1,293 @@
-const express = require('express')
-const app = express()
-var MongoClient = require('mongodb').MongoClient
-const dbName = 'gymme'
-//const url = 'mongodb+srv://gymme:Gymme2022@gymme.pypbz.mongodb.net/?retryWrites=true&w=majority";'
-const url = 'mongodb+srv://gymme:Gymme2022@gymme.pypbz.mongodb.net/test?authSource=admin&replicaSet=atlas-q7k3kv-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true'
-var multer = require('multer');
-var upload = multer();
-
-// for parsing application/x-www-form-urlencoded
-app.use(express.urlencoded({ extended: true }));
-
-app.use(upload.array());
+const express = require("express");
+const app = express();
+var MongoClient = require("mongodb").MongoClient;
+const dbName = "gymme";
+const url =
+  "mongodb+srv://gymme:Gymme2022@gymme.pypbz.mongodb.net/test?authSource=admin&replicaSet=atlas-q7k3kv-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true";
 
 // for parsing application/json
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb' }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-var db
+var db;
 
 MongoClient.connect(url, function (err, client) {
-  if (err) return console.log(err)
-  db = client.db(dbName)
-  console.log(`Connected MongoDB: ${url}`)
-  console.log(`Database: ${dbName}`)
-})
-
-// on the request to root (localhost:3000/)
-app.get('/', function (req, res) {
-  res.send('My first express http server');
+  if (err) return console.log(err);
+  db = client.db(dbName);
+  console.log(`Connected MongoDB: ${url}`);
+  console.log(`Database: ${dbName}`);
 });
 
-app.post('/registerTrainer', function (req, res) {
+// on the request to root (localhost:3000/)
+app.get("/", function (req, res) {
+  res.send("My first express http server");
+});
+
+app.get("/getUserInfo", function (req, res) {
+  // Recupera le info base dell'utente
+  let query = { uid: req.query.uid };
+  db.collection("users")
+    .findOne(query, { projection: { _id: 0, info: 1 } })
+    .then((results) => {
+      res.send(results);
+    })
+    .catch((error) => console.error(error));
+});
+
+function getContactIcons(contacts) {
+  let trainees;
+  return new Promise((resolve) => {
+    trainees = contacts.map((contact) => {
+      db.collection("users")
+        .findOne(
+          { uid: contact.uid },
+          { projection: { _id: 0, "info.name": 1, "info.surname": 1 } }
+        )
+        .then((contact) => {
+          console.log(contact.info);
+          trainees.push(contact.info);
+          console.log(trainees);
+        });
+    });
+    resolve(trainees);
+  });
+}
+
+app.get("/getUserContacts", function (req, res) {
+  // Recupera le info base dell'utente
+  let query = { uid: req.query.uid };
+
+  db.collection("users")
+    .findOne(query, { projection: { _id: 0, contacts: 1 } })
+    .then((results) => {
+      console.log(results);
+      var trainees = [];
+      if (results.contacts.length > 0) {
+        trainees
+      }
+      console.log(trainees);
+      res.send(trainees);
+    })
+    .catch((error) => console.error(error));
+});
+
+//*********************************************************************************** */
+app.post("/registerTrainer", function (req, res) {
   let user = req.body.user;
   let channel = req.body.channel;
   let event = req.body.event;
   let faq = req.body.faq;
   let trainingcard = req.body.trainingcard;
   let application = req.body.application;
-  db.collection('users').insertOne(user)
-    .then(results => {
-      db.collection('channels').insertOne(channel)
-        .then(results => {
-          db.collection('eventi').insertOne(event)
-            .then(results => {
-              db.collection('faq').insertOne(faq)
-                .then(results => {
-                  db.collection('training_cards').insertOne(trainingcard)
-                    .then(results => {
-                      db.collection('application').insertOne(application)
-                        .then(results => {
+  db.collection("users")
+    .insertOne(user)
+    .then((results) => {
+      db.collection("channels")
+        .insertOne(channel)
+        .then((results) => {
+          db.collection("eventi")
+            .insertOne(event)
+            .then((results) => {
+              db.collection("faq")
+                .insertOne(faq)
+                .then((results) => {
+                  db.collection("training_cards")
+                    .insertOne(trainingcard)
+                    .then((results) => {
+                      db.collection("application")
+                        .insertOne(application)
+                        .then((results) => {
                           res.send(results);
                         })
-                        .catch(error => console.error(error))
+                        .catch((error) => console.error(error));
                     })
-                    .catch(error => console.error(error))
+                    .catch((error) => console.error(error));
                 })
-                .catch(error => console.error(error))
+                .catch((error) => console.error(error));
             })
-            .catch(error => console.error(error))
+            .catch((error) => console.error(error));
         })
-        .catch(error => console.error(error))
+        .catch((error) => console.error(error));
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
 
-app.post('/registerTrainee', function (req, res) {
+app.post("/registerTrainee", function (req, res) {
   let user = req.body.user;
   let channel = req.body.channel;
   let application = req.body.application;
-  db.collection('users').insertOne(user)
-    .then(results => {
-      db.collection('channels').insertOne(channel)
-        .then(results => {
-          db.collection('application').insertOne(application)
-            .then(results => {
+  db.collection("users")
+    .insertOne(user)
+    .then((results) => {
+      db.collection("channels")
+        .insertOne(channel)
+        .then((results) => {
+          db.collection("application")
+            .insertOne(application)
+            .then((results) => {
               res.send(results);
             })
-            .catch(error => console.error(error))
+            .catch((error) => console.error(error));
         })
-        .catch(error => console.error(error))
+        .catch((error) => console.error(error));
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
 
 // Trainig Card
-app.get('/trainingCards', function (req, res) {
+app.get("/trainingCards", function (req, res) {
   let userId = req.query.userId;
   const query = { trainerId: userId };
-  db.collection('training_cards').findOne(query, { projection: { _id: 0, "cards.name": 1, "cards.trainees": 1, "cards.date": 1 } })
-    .then(results => {
+  db.collection("training_cards")
+    .findOne(query, {
+      projection: {
+        _id: 0,
+        "cards.name": 1,
+        "cards.trainees": 1,
+        "cards.date": 1,
+      },
+    })
+    .then((results) => {
       res.send(results);
     })
-    .catch(error => console.error(error))
-
+    .catch((error) => console.error(error));
 });
 
-
 // Get training card for trainees
-app.get('/traineeCards', function (req, res) {
+app.get("/traineeCards", function (req, res) {
   let trainerId = req.query.trainerId;
   let userId = req.query.userId;
   const query = { trainerId: trainerId };
-  db.collection('training_cards').findOne(query, { projection: { _id: 0, "cards.name": 1, "cards.trainees": 1, "cards.date": 1 } })
-    .then(results => {
+  db.collection("training_cards")
+    .findOne(query, {
+      projection: {
+        _id: 0,
+        "cards.name": 1,
+        "cards.trainees": 1,
+        "cards.date": 1,
+      },
+    })
+    .then((results) => {
       var cards = [];
       if (results.cards.length > 0) {
-        results.cards.map(card => {
+        results.cards.map((card) => {
           if (card.trainees.length > 0) {
-            card.trainees.map(trainee => {
-              console.log(trainee.value)
+            card.trainees.map((trainee) => {
+              console.log(trainee.value);
               if (trainee.value == userId) {
                 cards.push(card);
               }
-            })
+            });
           }
-        })
+        });
       }
       res.send(cards);
-    }).catch(error => console.error(error))
+    })
+    .catch((error) => console.error(error));
 });
 
-
-app.get('/getCard', function (req, res) {
+app.get("/getCard", function (req, res) {
   let trainerId = req.query.trainerId;
   let date = req.query.date;
   const query = { trainerId: trainerId };
-  console.log(trainerId)
-  db.collection('training_cards').findOne(query, { projection: { _id: 0, "cards.name": 1, "cards.content": 1, "cards.date": 1 } })
-    .then(results => {
+  console.log(trainerId);
+  db.collection("training_cards")
+    .findOne(query, {
+      projection: {
+        _id: 0,
+        "cards.name": 1,
+        "cards.content": 1,
+        "cards.date": 1,
+      },
+    })
+    .then((results) => {
       var cardContent;
       if (results.cards.length > 0) {
-        results.cards.map(card => {
+        results.cards.map((card) => {
           if (card.date == date) {
-            cardContent = card
+            cardContent = card;
           }
-        })
+        });
       }
-      console.log(cardContent)
+      console.log(cardContent);
       res.send(cardContent);
-    }).catch(error => console.error(error))
+    })
+    .catch((error) => console.error(error));
 });
 
-
-
-app.post('/uploadCard', function (req, res) {
+app.post("/uploadCard", function (req, res) {
   let userId = req.body.userId;
   let file = req.body.file;
-  console.log(file.date)
-  db.collection('training_cards').updateOne({ trainerId: userId }, { $push: { cards: file } })
-    .then(results => {
+  console.log(file.date);
+  db.collection("training_cards")
+    .updateOne({ trainerId: userId }, { $push: { cards: file } })
+    .then((results) => {
       res.send(results);
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
 
-app.post('/deleteCard', function (req, res) {
+app.post("/deleteCard", function (req, res) {
   let trainerId = req.body.trainerId;
   let filename = req.body.filename;
-  console.log(trainerId)
-  db.collection('training_cards').updateOne({ trainerId: trainerId }, { $pull: { cards: { name: filename } } })
-    .then(results => {
+  console.log(trainerId);
+  db.collection("training_cards")
+    .updateOne(
+      { trainerId: trainerId },
+      { $pull: { cards: { name: filename } } }
+    )
+    .then((results) => {
       res.send(results);
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
 
-app.post('/cardTrainees', function (req, res) {
+app.post("/cardTrainees", function (req, res) {
   let trainerId = req.body.trainerId;
   let trainees = req.body.trainees;
   let filename = req.body.filename;
-  console.log(JSON.stringify(trainees))
-  db.collection('training_cards').updateOne({ trainerId: trainerId, "cards.name": filename }, { $set: { "cards.$.trainees": trainees } })
-    .then(results => {
+  console.log(JSON.stringify(trainees));
+  db.collection("training_cards")
+    .updateOne(
+      { trainerId: trainerId, "cards.name": filename },
+      { $set: { "cards.$.trainees": trainees } }
+    )
+    .then((results) => {
       res.send(results);
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
 
-app.get('/getTrainees', function (req, res) {
+app.get("/getTrainees", function (req, res) {
   let userId = req.query.userId;
   const query = { uid: userId };
   const filter = {
     _id: 0,
-    contacts: 1
-  }
-  db.collection('users').findOne(query, { projection: filter })
-    .then(results => {
+    contacts: 1,
+  };
+  db.collection("users")
+    .findOne(query, { projection: filter })
+    .then((results) => {
       res.send(results);
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
-
 
 // Calendar
-app.get('/eventCalendar', function (req, res) {
+app.get("/eventCalendar", function (req, res) {
   let test = req.query.uid;
-  console.log(test)
+  console.log(test);
   const query = { uid: test };
-  db.collection('eventi').findOne(query)
-    .then(results => {
-      console.log(results)
+  db.collection("eventi")
+    .findOne(query)
+    .then((results) => {
+      console.log(results);
       res.send(results);
     })
-    .catch(error => console.error(error))
-
+    .catch((error) => console.error(error));
 });
 
-
-app.post('/uploadEvent', function (req, res) {
+app.post("/uploadEvent", function (req, res) {
   //console.log(req.body)
   let userId = req.body.userId;
   let eventi = req.body.eventi;
@@ -218,16 +298,16 @@ app.post('/uploadEvent', function (req, res) {
     upVal[strQuery] = eventi[key];
   });
 
-  db.collection('eventi').updateOne({ uid: userId }, { "$push": upVal })
-    .then(results => {
+  db.collection("eventi")
+    .updateOne({ uid: userId }, { $push: upVal })
+    .then((results) => {
       res.send(results);
     })
-    .catch(error => console.error(error))
-
+    .catch((error) => console.error(error));
 });
 
-app.post('/deleteEvent', function (req, res) {
-  console.log(req.body)
+app.post("/deleteEvent", function (req, res) {
+  console.log(req.body);
   let userId = req.body.userId;
   let giorno = req.body.giorno;
   let eventi = req.body.eventi;
@@ -245,40 +325,42 @@ app.post('/deleteEvent', function (req, res) {
   } else {
     Object.keys(eventi).forEach((key) => {
       strQuery = "impegni." + key;
-      upVar2 = { idRip: idRip }
+      upVar2 = { idRip: idRip };
       upVal[strQuery] = upVar2;
     });
   }
 
   console.log(upVal);
-  db.collection('eventi').updateOne({ uid: userId }, { "$pull": upVal })
-    .then(results => {
+  db.collection("eventi")
+    .updateOne({ uid: userId }, { $pull: upVal })
+    .then((results) => {
       res.send(results);
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
 
-
-/*  
-*   getEvents recupera tutti gli eventi in cui è l'utente trainee è presente nel campo trainee
-*   PARAMS: trainerID e userID
-*   RETURN: dizionario di tutti gli eventi = "day": [array di eventi]
-*/
-app.get('/getEvents', function (req, res) {
+/*
+ *   getEvents recupera tutti gli eventi in cui è l'utente trainee è presente nel campo trainee
+ *   PARAMS: trainerID e userID
+ *   RETURN: dizionario di tutti gli eventi = "day": [array di eventi]
+ */
+app.get("/getEvents", function (req, res) {
   let trainerId = req.query.trainerId;
   let userId = req.query.userId;
-  db.collection('eventi').find({ 'uid': trainerId }, { 'impegni': 1 }).toArray()
-    .then(results => {
+  db.collection("eventi")
+    .find({ uid: trainerId }, { impegni: 1 })
+    .toArray()
+    .then((results) => {
       let filteredEvents = createEventDictionary(results[0].impegni, userId);
       res.send(filteredEvents);
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
 
 function createEventDictionary(fullList, userId) {
-  var dict = {}
+  var dict = {};
   function isTraineeInside(val) {
-    let isInside = val.trainee.filter(trainee => trainee.value == userId);
+    let isInside = val.trainee.filter((trainee) => trainee.value == userId);
     return isInside.length > 0;
   }
   for (const [key, value] of Object.entries(fullList)) {
@@ -292,16 +374,18 @@ function createEventDictionary(fullList, userId) {
   return dict;
 }
 
-/*  
-*   getUpcomingEvents recupera tutti gli eventi prossimi per il trainee (2 giorni)
-*   PARAMS: trainerID e userID
-*   RETURN: dizionario di tutti gli eventi = "day": [array di eventi]
-*/
-app.get('/getUpcomingEvents', function (req, res) {
+/*
+ *   getUpcomingEvents recupera tutti gli eventi prossimi per il trainee (2 giorni)
+ *   PARAMS: trainerID e userID
+ *   RETURN: dizionario di tutti gli eventi = "day": [array di eventi]
+ */
+app.get("/getUpcomingEvents", function (req, res) {
   let trainerId = req.query.trainerId;
   let userId = req.query.userId;
-  db.collection('eventi').find({ 'uid': trainerId }, { 'impegni': 1 }).toArray()
-    .then(results => {
+  db.collection("eventi")
+    .find({ uid: trainerId }, { impegni: 1 })
+    .toArray()
+    .then((results) => {
       let filteredEvents = createEventDictionary(results[0].impegni, userId);
       let upcomingEvents = {};
       console.log(filteredEvents);
@@ -314,205 +398,217 @@ app.get('/getUpcomingEvents', function (req, res) {
       }
       res.send(upcomingEvents);
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
 
-app.get('/getUpcomingTrainerEvents', function (req, res) {
-    let userId = req.query.userId;
-    db.collection('eventi').find({'uid': userId}, {'impegni': 1}).toArray()
-        .then(results => {
+app.get("/getUpcomingTrainerEvents", function (req, res) {
+  let userId = req.query.userId;
+  db.collection("eventi")
+    .find({ uid: userId }, { impegni: 1 })
+    .toArray()
+    .then((results) => {
+      let filteredEvents = {};
+      for (const [key, value] of Object.entries(results[0].impegni)) {
+        if (value.length > 0) {
+          filteredEvents[key] = value;
+        }
+      }
 
-            let filteredEvents = {};
-            for (const [key, value] of Object.entries(results[0].impegni)) {
-                if (value.length > 0) {
-                    filteredEvents[key] = value;
-                }
-            }
+      let upcomingEvents = {};
+      if (Object.keys(filteredEvents).length > 2) {
+        let [first, second] = Object.keys(filteredEvents);
+        upcomingEvents[first] = filteredEvents[first];
+        upcomingEvents[second] = filteredEvents[second];
+      } else {
+        upcomingEvents = filteredEvents;
+      }
 
-            let upcomingEvents = {};
-            if (Object.keys(filteredEvents).length > 2) {
-                let [first, second] = Object.keys(filteredEvents);
-                upcomingEvents[first] = filteredEvents[first];
-                upcomingEvents[second] = filteredEvents[second];
-            } else {
-                upcomingEvents = filteredEvents;
-            }
+      let result = [];
+      for (let key in upcomingEvents) {
+        upcomingEvents[key].forEach((element) => {
+          result.push(element);
+        });
+      }
 
-            let result = []
-            for (let key in upcomingEvents) {
-                upcomingEvents[key].forEach(element => {
-                    result.push(element);
-                });
-            }
-
-            res.send(result);
-        })
-        .catch(error => console.error(error))
+      res.send(result);
+    })
+    .catch((error) => console.error(error));
 });
 
-app.get('/getTrainee', function (req, res) {
+app.get("/getTrainee", function (req, res) {
   let trainer = req.query.uid;
-  console.log(trainer)
+  console.log(trainer);
   const query = { "contacts.0": trainer };
-  db.collection('users').find(query, { projection: { contacts: 0 } }).toArray()
-    .then(results => {
-      console.log(results)
+  db.collection("users")
+    .find(query, { projection: { contacts: 0 } })
+    .toArray()
+    .then((results) => {
+      console.log(results);
       res.send(results);
     })
-    .catch(error => console.error(error))
-
+    .catch((error) => console.error(error));
 });
 
 //Chat
-app.get('/chats', function (req, res) {
+app.get("/chats", function (req, res) {
   let channelId = req.query._id;
   const query = { _id: channelId };
-  db.collection('channels').findOne(query)
-    .then(results => {
+  db.collection("channels")
+    .findOne(query)
+    .then((results) => {
       res.send(results);
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
 
-app.get('/chatMessages', function (req, res) {
+app.get("/chatMessages", function (req, res) {
   let channelId = req.query._id;
   const query = { _id: channelId };
-  db.collection('channels').findOne(query)
-    .then(results => {
+  db.collection("channels")
+    .findOne(query)
+    .then((results) => {
       res.send(results.messages);
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
 
-app.get('/chatImages', function (req, res) {
+app.get("/chatImages", function (req, res) {
   let channelId = req.query._id;
   const query = { _id: channelId };
-  db.collection('channels').findOne(query)
-    .then(results => {
+  db.collection("channels")
+    .findOne(query)
+    .then((results) => {
       res.send(results.messages.filter((m) => m.image !== ""));
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
 
-app.post('/sendMessage', function (req, res) {
+app.post("/sendMessage", function (req, res) {
   let channelId = req.body._id;
   let message = req.body.message;
-  db.collection('channels').updateOne({ _id: channelId }, { $push: { messages: message } })
-    .then(results => {
+  db.collection("channels")
+    .updateOne({ _id: channelId }, { $push: { messages: message } })
+    .then((results) => {
       res.send(results);
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
 
 //Users
-app.get('/user', function (req, res) {
+app.get("/user", function (req, res) {
   let uid = req.query.uid;
   const query = { uid: uid };
-  db.collection('users').findOne(query)
-    .then(results => {
+  db.collection("users")
+    .findOne(query)
+    .then((results) => {
       if (results.contacts) {
-        results.contacts.map(user => {
-          db.collection('users').findOne({ uid: user.uid }, { projection: { profile_pic: 1 } })
-            .then(result => {
+        results.contacts.map((user) => {
+          db.collection("users")
+            .findOne({ uid: user.uid }, { projection: { profile_pic: 1 } })
+            .then((result) => {
               if (result) {
-                user["profile_pic"] = result.profile_pic ? result.profile_pic : null;
-
+                user["profile_pic"] = result.profile_pic
+                  ? result.profile_pic
+                  : null;
               }
-            })
+            });
         });
         res.send(results);
       }
-
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
 
-
 const getContactsPic = (contacts) => {
-  contacts.map(user => {
-    db.collection('users').findOne({ uid: user.uid }, { projection: { profile_pic: 1 } })
-      .then(result => {
+  contacts.map((user) => {
+    db.collection("users")
+      .findOne({ uid: user.uid }, { projection: { profile_pic: 1 } })
+      .then((result) => {
         if (result) {
           user["picture"] = result.profile_pic ? result.profile_pic : null;
-
         }
-      })
+      });
   });
-}
+};
 
-
-app.post('/updateDescription', function (req, res) {
+app.post("/updateDescription", function (req, res) {
   let uid = req.body.uid;
   let description = req.body.description;
   console.log("uid: " + uid);
   console.log("descrizione: " + description);
-  db.collection('users').updateOne({ uid: uid }, { $set: { description: description } })
-    .then(results => {
+  db.collection("users")
+    .updateOne({ uid: uid }, { $set: { description: description } })
+    .then((results) => {
       res.send(results);
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
 
-app.post('/updateFormazione', function (req, res) {
+app.post("/updateFormazione", function (req, res) {
   let uid = req.body.uid;
   let formazione = req.body.formazione;
   console.log("uid: " + uid);
   console.log("formazione: " + formazione);
-  db.collection('users').updateOne({ uid: uid }, { $set: { formazione: formazione } })
-    .then(results => {
+  db.collection("users")
+    .updateOne({ uid: uid }, { $set: { formazione: formazione } })
+    .then((results) => {
       res.send(results);
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
 
-app.post('/updatePicture', function (req, res) {
+app.post("/updatePicture", function (req, res) {
   let uid = req.body.uid;
   let profile_pic = req.body.profile_pic;
   console.log("uid: " + uid);
-  db.collection('users').updateOne({ uid: uid }, { $set: { profile_pic: profile_pic } })
-    .then(results => {
+  db.collection("users")
+    .updateOne({ uid: uid }, { $set: { profile_pic: profile_pic } })
+    .then((results) => {
       res.send(results);
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
 
-app.post('/updatePersInfo', function (req, res) {
+app.post("/updatePersInfo", function (req, res) {
   let uid = req.body.uid;
   let eta = req.body.eta;
   let peso = req.body.peso;
   let altezza = req.body.altezza;
   console.log("uid: " + uid);
-  db.collection('users').updateOne({ uid: uid }, { $set: { eta: eta, peso: peso, altezza: altezza } })
-    .then(results => {
+  db.collection("users")
+    .updateOne(
+      { uid: uid },
+      { $set: { eta: eta, peso: peso, altezza: altezza } }
+    )
+    .then((results) => {
       res.send(results);
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
 
-app.get('/faq', function (req, res) {
+app.get("/faq", function (req, res) {
   let uid = req.query.uid;
   const query = { uid: uid };
-  db.collection('faq').findOne(query, { projection: { _id: 0, questions: 1 } })
-    .then(results => {
+  db.collection("faq")
+    .findOne(query, { projection: { _id: 0, questions: 1 } })
+    .then((results) => {
       res.send(results);
     })
-    .catch(error => console.error(error))
-
+    .catch((error) => console.error(error));
 });
 
-app.post('/refreshFaq', function (req, res) {
+app.post("/refreshFaq", function (req, res) {
   let uid = req.body.uid;
   let questions = req.body.questions;
   console.log("uid: " + uid);
   console.log("questions: " + questions);
-  db.collection('faq').updateOne({ uid: uid }, { $set: { questions: questions } })
-    .then(results => {
+  db.collection("faq")
+    .updateOne({ uid: uid }, { $set: { questions: questions } })
+    .then((results) => {
       res.send(results);
     })
-    .catch(error => console.error(error))
+    .catch((error) => console.error(error));
 });
-
-
 
 // Change the 404 message modifing the middleware
 app.use(function (req, res, next) {
@@ -520,6 +616,5 @@ app.use(function (req, res, next) {
 });
 
 // start the server in the port 3000 !
-// To change when deploy on Linux Server 
+// To change when deploy on Linux Server
 app.listen(3000);
-
