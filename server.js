@@ -41,11 +41,11 @@ app.get("/getUserContacts", async function (req, res) {
   contacts = await db.collection("users").findOne(query, { projection: { _id: 0, contacts: 1 } })
   trainees =  await Promise.all(
     contacts.contacts.map( async contact => {
-     return await db.collection("users").findOne({ uid: contact.uid }, { projection: { _id: 0, "info.name": 1, "info.surname": 1, "info.profilePic":1 } })
+     return await db.collection("users").findOne({ uid: contact.uid }, { projection: { _id: 0, "info.name": 1, "info.surname": 1, "info.profilePic":1, uid: 1 } })
   }))
   var result = []
   Object.keys(trainees).forEach(function (key) {
-    result.push(trainees[key].info)
+    result.push({...trainees[key].info, uid: trainees[key].uid})
   })
   res.send(result)
   });
@@ -241,20 +241,30 @@ app.get("/getUserContacts", async function (req, res) {
       .catch((error) => console.error(error));
   });
 
-  app.get("/getTrainees", function (req, res) {
-    let userId = req.query.userId;
-    const query = { uid: userId };
-    const filter = {
-      _id: 0,
-      contacts: 1,
-    };
-    db.collection("users")
-      .findOne(query, { projection: filter })
-      .then((results) => {
-        res.send(results);
-      })
-      .catch((error) => console.error(error));
-  });
+app.get("/getTrainees", async function (req, res) {
+
+  // retrieve contacts
+  let userId = req.query.userId;
+  const query = {uid: userId};
+  const filter = {
+    _id: 0,
+    contacts: 1,
+  };
+  let users = await db.collection("users").findOne(query, {projection: filter});
+
+  //retrieve data of each contact
+  let trainees = [];
+  for (const contact of users.contacts) {
+    const query = {uid: contact.uid};
+    await db.collection('users').findOne(query)
+        .then(user => {
+          trainees.push(user);
+        })
+        .catch(error => console.error(error))
+  }
+
+  res.send(trainees);
+});
 
   // Calendar
   app.get("/eventCalendar", function (req, res) {
@@ -487,11 +497,11 @@ app.get("/getUserContacts", async function (req, res) {
         if (results.contacts) {
           results.contacts.map((user) => {
             db.collection("users")
-              .findOne({ uid: user.uid }, { projection: { profile_pic: 1 } })
+              .findOne({ uid: user.uid }, { projection: { profilePic: 1 } })
               .then((result) => {
                 if (result) {
-                  user["profile_pic"] = result.profile_pic
-                    ? result.profile_pic
+                  user["profilePic"] = result.profilePic
+                    ? result.profilePic
                     : null;
                 }
               });
@@ -542,10 +552,10 @@ app.get("/getUserContacts", async function (req, res) {
 
   app.post("/updatePicture", function (req, res) {
     let uid = req.body.uid;
-    let profile_pic = req.body.profile_pic;
+    let profilePic = req.body.profilePic;
     console.log("uid: " + uid);
     db.collection("users")
-      .updateOne({ uid: uid }, { $set: { profile_pic: profile_pic } })
+      .updateOne({ uid: uid }, { $set: { profilePic: profilePic } })
       .then((results) => {
         res.send(results);
       })
@@ -554,14 +564,14 @@ app.get("/getUserContacts", async function (req, res) {
 
   app.post("/updatePersInfo", function (req, res) {
     let uid = req.body.uid;
-    let eta = req.body.eta;
-    let peso = req.body.peso;
-    let altezza = req.body.altezza;
+    let birthday = req.body.birthday;
+    let weight = req.body.weight;
+    let height = req.body.height;
     console.log("uid: " + uid);
     db.collection("users")
       .updateOne(
         { uid: uid },
-        { $set: { eta: eta, peso: peso, altezza: altezza } }
+        { $set: { "info.birthday": birthday,"info.weight": weight, "info.height": height } }
       )
       .then((results) => {
         res.send(results);
