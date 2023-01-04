@@ -27,7 +27,7 @@ app.get("/", function (req, res) {
 });
 
 app.get("/getUserInfo", function (req, res) {
-  // Recupera le info base dell'utente
+  // Recupera le info  base dell'utente
   let query = { uid: req.query.uid };
   db.collection("users")
     .findOne(query, { projection: { _id: 0, info: 1 } })
@@ -41,27 +41,42 @@ app.get("/getUserInfo", function (req, res) {
 app.get("/getUserContacts", async function (req, res) {
   // Recupera le info base dell'utente
   let query = { uid: req.query.uid };
+  console.log(req.query)
   contacts = await db.collection("users").findOne(query, { projection: { _id: 0, contacts: 1 } })
-  trainees = await Promise.all(
-    contacts.contacts.map(async contact => {
-      return await db.collection("users").findOne({ uid: contact.uid }, { projection: { _id: 0, "info.name": 1, "info.surname": 1, "info.profilePic": 1, uid: 1 } })
-    }))
+  trainees =  await Promise.all(
+    contacts.contacts.map( async contact => {
+     return await db.collection("users").findOne({ uid: contact.uid }, { projection: { _id: 0,  uid:1 ,"info.name": 1, "info.surname": 1, "info.profilePic":1} })
+  }))
   var result = []
   Object.keys(trainees).forEach(function (key) {
-    result.push({ ...trainees[key].info, uid: trainees[key].uid })
+    result.push(trainees[key])
   })
+  console.log(result)
   res.send(result)
-});
+  });
 
 
 
-app.post("/userRegistration",  async function (req, res) {
+app.post("/userRegistration", async function (req, res) {
 
   const result = await db.collection("users").insertOne(req.body)
     .catch((error) => console.error(error));
   console.log(`A user was inserted with the _id: ${result.insertedId}`);
 
   res.send("User registration completed successfully")
+});
+
+
+app.get("/traineeLink", async function (req, res) {
+  console.log(req.query)
+  const  trainer = await db.collection("users").findOne({ 'info.code': req.query.code }, { projection: { _id: 0, "info.name": 1, "info.surname": 1, uid: 1 } })
+  console.log("trainer: ", trainer);
+  if (trainer != null){
+    res.send(trainer)
+} else {
+  res.send(null)
+}
+  
 });
 
 
@@ -430,6 +445,8 @@ app.get("/getTrainee", function (req, res) {
     .catch((error) => console.error(error));
 });
 
+
+
 //Chat
 app.get("/chats", function (req, res) {
   let channelId = req.query._id;
@@ -479,6 +496,7 @@ app.post("/sendMessage", function (req, res) {
 app.get("/user", function (req, res) {
   let uid = req.query.uid;
   const query = { uid: uid };
+  console.log(req.query)
   db.collection("users")
     .findOne(query)
     .then((results) => {
@@ -494,6 +512,7 @@ app.get("/user", function (req, res) {
               }
             });
         });
+        console.log(results)
         res.send(results);
       }
     })
