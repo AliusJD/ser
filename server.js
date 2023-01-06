@@ -353,6 +353,25 @@ app.get("/getEvents", function (req, res) {
     .catch((error) => console.error(error));
 });
 
+app.get("/getTrainerEvents", function (req, res) {
+  let userId = req.query.userId;
+  db.collection("eventi")
+     .find({ uid: userId }, { impegni: 1 })
+     .toArray()
+     .then((results) => {
+       let dict = [];
+
+       Object.values(results[0].impegni).forEach((value) => {
+         value.forEach((element) => {
+           dict.push(element);
+         });
+       });
+
+       res.send(dict);
+     })
+     .catch((error) => console.error(error));
+});
+
 function createEventDictionary(fullList, userId) {
   var dict = {};
   function isTraineeInside(val) {
